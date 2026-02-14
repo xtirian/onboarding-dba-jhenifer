@@ -27,6 +27,12 @@ Categoria | Ferramenta |  Descrição/ Uso
 3. Olhar o painel de Slow Queries (No pgAdmin, fica em **Status** -> **Monitor**
 #### Integração com Desenvolvimento (Laravel)
 Como nós usamos o Laravel no projeto, a nossa interação com o banco de dados n~]ao é apenas via SQL puro, mas sim através de abstrações que garantem a integridade e a padronização do código.
+
+<details>
+<summary><b>Arquitetura de Software não oficial (O doc oficial é o feito pelo Luan)</b></summary>
+    ![Arquitetura](https://github.com/xtirian/onboarding-dba-jhenifer/blob/main/Arquitetura%20de%20Software%20(RHLabs).png?raw=true)
+</details>
+
 1. Migrations: Fazem o controle de versão do banco
   1. Nunca crie tabelas manualmente via console/IDE de produção
   2. Toda alteração de schema deve ser feita via `$ php artisan make:migration` ou `$ sail artisan migrate`
