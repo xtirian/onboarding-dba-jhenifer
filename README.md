@@ -29,7 +29,7 @@ Categoria | Ferramenta |  Descrição/ Uso
 Como nós usamos o Laravel no projeto, a nossa interação com o banco de dados n~]ao é apenas via SQL puro, mas sim através de abstrações que garantem a integridade e a padronização do código.
 
 <details>
-<summary><b>Arquitetura de Software não oficial (O doc oficial é o feito pelo Luan)</b></summary>
+<summary><b>[IMAGEM] Arquitetura de Software não oficial (O doc oficial é o feito pelo Luan)</b></summary>
     <img alt="Arquitetura" src="https://github.com/xtirian/onboarding-dba-jhenifer/blob/main/Arquitetura%20de%20Software%20(RHLabs).png?raw=true" />
 </details>
 
