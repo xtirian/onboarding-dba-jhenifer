@@ -25,7 +25,7 @@ Categoria | Ferramenta |  Descrição/ Uso
 1. Verificar se os Backups do servidor rodaram com sucesso
 2. Checar alertas de espaço em disco no servidor
 3. Olhar o painel de Slow Queries (No pgAdmin, fica em **Status** -> **Monitor**
-#### Integração com Desenvolvimento (Laravel)
+### Integração com Desenvolvimento (Laravel)
 Como nós usamos o Laravel no projeto, a nossa interação com o banco de dados n~]ao é apenas via SQL puro, mas sim através de abstrações que garantem a integridade e a padronização do código.
 
 <details>
@@ -33,7 +33,7 @@ Como nós usamos o Laravel no projeto, a nossa interação com o banco de dados 
     <img alt="Arquitetura" src="https://github.com/xtirian/onboarding-dba-jhenifer/blob/main/Arquitetura%20de%20Software%20(RHLabs).png?raw=true" />
 </details>
 
-1. Migrations: Fazem o controle de versão do banco
+#### Migrations: Fazem o controle de versão do banco
   1. Nunca crie tabelas manualmente via console/IDE de produção
   2. Toda alteração de schema deve ser feita via `$ php artisan make:migration` ou `$ sail artisan migrate`
   3. "Fiz uma coisa errada e quero dar Rollback". Sempre teste o método down() da sua migration para garantir que a alteração pode ser desfeita.
@@ -72,7 +72,7 @@ public function up(): void
     $php (ou sail) arisan migrate
 ```
 
-2. Models (Eloquent)
+#### Models (Eloquent)
    Os models são a presentação das suas tabelas no código PHP
   1. **Nomeclatura** Tableas no plural (`users`), Models no singular (`User`);
   2. **Fillable** Sempre defina a propriedade `$fillable` para evitar ataques de *Mass Assignment*. Isso diminui o esforço do servidor na hora de responder uma solicitação, porque define na base o que será entregue ao solicitante sobre aquele model [Vídeo de um indiano sobre o assunto! High Tier +8000](https://www.youtube.com/watch?v=epoFy-co81U).
@@ -137,7 +137,7 @@ class Lead extends Model
 
 
 ```
-5. Repository Pattern
+#### Repository Pattern
   Utyilizamos Repositories para isolar a lógica de acesso aos dados da lógica de negócio (Services e Controllers).
   * **Objetivo** é que se precisarmos mudar a query, ou método de busca, não precisaremo mudar em todos os lugares que esta query é usada, mudamos apenas o repository
   * A **Dica** é que o Repository deve retornar collections ou models, mantendo o Controller/Service só com o essencial.
