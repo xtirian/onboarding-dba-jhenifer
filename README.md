@@ -37,12 +37,57 @@ Como nós usamos o Laravel no projeto, a nossa interação com o banco de dados 
   1. Nunca crie tabelas manualmente via console/IDE de produção
   2. Toda alteração de schema deve ser feita via `$ php artisan make:migration` ou `$ sail artisan migrate`
   3. "Fiz uma coisa errada e quero dar Rollback". Sempre teste o método down() da sua migration para garantir que a alteração pode ser desfeita.
+
+Exemplo:
+
+**a. Você primeiro cria a Migration**
+```bash
+    $ php (ou sail) artisan make:migration create_table_leads
+```
+**b. Vicê define a estrutura da tabela. Quando você abrir a pasta `database/migrations/*.php` ela estará vazia só com a estrutura básica do `public function up(): void { ... }`**
+```php
+// Isto aqui dentro da migration
+
+public function up(): void
+{
+    Schema::create('leads', function (Blueprint $table) {
+        // Se você fez o que te indiquei para dar uma olhada em POO com PHP, isso aqui é moleza para entender:
+
+        $table->uuid('id')->primary(); // Aqui você marca que o ID é UUID
+        $table->uuid('session_id')->nullable()->index(); // Aqui você cria o índice
+        $table->string('name', 100)->nullable(); // Aqui define o tipo String e tamanho 100
+        $table->string('email', 100)->nullable()->unique(); 
+        $table->string('phone', 20)->nullable();
+        
+        $table->enum('status', ['draft', 'converted'])->default('draft');
+        
+        $table->string('last_field_filled', 50)->nullable();
+        $table->timestamp('converted_at')->nullable();
+        $table->timestamps();
+    });
+}
+```
+**c. Por fim você executa a migrate**
+```bash
+    $php (ou sail) arisan migrate
+```
+
 2. Models (Eloquent)
    Os models são a presentação das suas tabelas no código PHP
   1. **Nomeclatura** Tableas no plural (`users`), Models no singular (`User`);
   2. **Fillable** Sempre defina a propriedade `$fillable` para evitar ataques de *Mass Assignment*. Isso diminui o esforço do servidor na hora de responder uma solicitação, porque define na base o que será entregue ao solicitante sobre aquele model [Vídeo de um indiano sobre o assunto! High Tier +8000](https://www.youtube.com/watch?v=epoFy-co81U).
   3. **Relacionamentos** Defina explicitament os métodos `hasMany`, `belongsTo`, etc., para facilitar o uso de *Eager Loading*  e evitar o problema de N+1 queries. [Lazy Loading vs. Eager Loading in Laravel](https://medium.com/@mhaseeb_01/lazy-loading-vs-eager-loading-in-laravel-3d5192b75be9)
-    Exemplo:
+
+
+Exemplo:
+
+
+**a. Criar o model é bem simples**
+```bash
+$ php (ou sail) artisan make:model Lead
+```
+
+**b. Depois você poderá editar o arquivo de Model**
 ```php
 <?php
 namespace App\Models;
@@ -96,7 +141,11 @@ class Lead extends Model
   Utyilizamos Repositories para isolar a lógica de acesso aos dados da lógica de negócio (Services e Controllers).
   * **Objetivo** é que se precisarmos mudar a query, ou método de busca, não precisaremo mudar em todos os lugares que esta query é usada, mudamos apenas o repository
   * A **Dica** é que o Repository deve retornar collections ou models, mantendo o Controller/Service só com o essencial.
+
 Exemploooo:
+**a. Aqui você precisa criar diretamente o Repository.** Fica o entendimento que o uso de Repositories é uma abstração do fluxo de um Software, ou se você preferir, ele é um _Pattern_ muito recomendado e eu gostaria muito que você desse uma olhada neste artigo: https://medium.com/by-vinicius-reis/repository-pattern-n%C3%A3o-precisa-ser-chato-principalmente-com-laravel-d97235b31c7e
+
+
 ```php
 <?php
 namespace App\Repositories;
@@ -112,23 +161,45 @@ class LeadRepository
         $this->model = $lead;
     }    
     /**
-     * Converte o lead e marca o timestamp de conversão;
+     * REGRAS DE NEGÓCIO ABSTRAÍDAS:
+     * O Controller não precisa saber que existe um campo 'converted_at'
+     * ou que o status é uma string 'converted'. Ele só pede para 'converter'.
      */
     public function markAsConverted(string $id): bool
     {
-        return $this->model->where('id', $id)->update([
-            'status' => 'converted',
-            'converted_at' => Carbon::now()
+        $lead = $this->model->findOrFail($id);
+        
+        /**
+         * Em alguns casos, as regras de negócio mais simples podem ser executada dentro do Repository e o service pode se preocupar com integrações de APIs, conexões entre serviços e regras mais pesadas. Para este caso aqui, o dev que está construindo o serviço poderia focar em regras de negócio enquanto o repository se preocupe com o quê de fato será atualizado.
+         * O dev pode chamar somente:
+            public function convertLead(string $id)
+            {
+                $lead = $this->repository->find($id);
+                // REGRA DE NEGÓCIO: Aqui é o lugar dela!
+                if (empty($lead->email)) {
+                    throw new \Exception("Lead sem e-mail não pode ser convertido.");
+                }
+            
+                return $this->repository->markAsConverted($id); <- Olha aqui o que precisa chamar
+            }
+         */
+        return $lead->update([
+            'status'       => 'converted',
+            'converted_at' => now(), // Centralizado aqui, evita que o dev esqueça a data
         ]);
     }
     /**
-     * Retorna apenas os leads que passaram pelo funil;
+     * IMPORTÂNCIA: Padronização
+     * Se mudarmos a regra de "leads recentes" de 10 para 20 dias, 
+     * ou se adicionarmos um filtro para ignorar leads de teste (@test.com),
+     * alteramos apenas aqui e reflete em todo o sistema.
      */
     public function getOnlyConvertedLeads()
     {
         return $this->model
-            ->converted() // Chamada do scopeConverted()
-            ->orderBy('converted_at', 'desc')
+            ->whereNotNull('email') 
+            ->orderBy('created_at', 'desc')
+            ->limit($limit)
             ->get();
     }
 
